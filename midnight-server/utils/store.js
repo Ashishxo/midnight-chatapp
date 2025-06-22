@@ -1,39 +1,19 @@
-import { nanoid } from "nanoid";
-
-/*
-Chat{
-    ChatID,
-    message,
-    userID
-}
-
-
-rooms: roomid, Room
-users: userid, User
-
-Room: {
-    roomid,
-    users[],
-    chats[]
-}
-
-users in room: [userid, name]
-
-users in users: {userid, connection}
-
-*/
 
 function createStore(){
     const users = new Map();
-    const rooms = new Map();
 
     return{
-        createUser(socket){
-            userID = nanoid()
-            
+        createUser(username, socket){
+            users.set(username, socket);
+        },
 
-            return userID;
-        }
+        getUser(username){
+            return users.get(username);
+        },
+
+        deleteUser(username) {
+            users.delete(username);
+        },
     }
 
 
