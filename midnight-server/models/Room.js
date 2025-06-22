@@ -6,18 +6,10 @@ const roomSchema = new Schema({
         required: true,
         unique: true
     },
-    chats: [
-        {
-            type: Schema.Types.ObjectId,
-            ref: 'Chat',
-            required: true
-        }
-    ],
     users: [
         {
             type: Schema.Types.ObjectId,
             ref: 'User',
-            required: true
         }
     ]
 }, { timestamps: true })

@@ -1,6 +1,10 @@
 import { WebSocketServer } from 'ws';
 import jwt from 'jsonwebtoken'
 import createStore from './store.js';
+import { roomModel } from '../models/Room.js';
+import { userModel } from '../models/User.js';
+import { nanoid } from 'nanoid';
+import { chatModel } from '../models/Chat.js';
 
 function onSocketError(err){
   console.log(err)
@@ -32,7 +36,7 @@ export function setupWebSocket(server) {
 
     try {
       const decoded = jwt.verify(token, process.env.SECRET);
-      request.user = decoded;
+      request.user = decoded.username;
       socket.removeListener('error', onSocketError);
 
       wss.handleUpgrade(request, socket, head, (ws) => {
@@ -49,13 +53,97 @@ export function setupWebSocket(server) {
   })
 
   wss.on('connection', function connection(socket) {
+    if (!socket.username) {
+      console.warn("Socket has no username attached");
+      return;
+    }
 
-    store.createUser(socket.username, socket)
-    console.log(store.getUser(socket.username).username)
+    if (store.getUser(socket.username)) {
+      console.warn("Duplicate socket connection for", socket.username);
+      socket.close();
+      return;
+    }
+    store.createUser(socket.username, socket);
+
     socket.send("Heyy");
 
-    socket.on('message', function message(data) {
-      console.log('📨 Received:', data.toString());
+    socket.on('message', async function message(data) {
+      const message = JSON.parse(data.toString())
+      if (!socket.username) {
+        console.warn("Socket has no username attached");
+        return;
+      }      
+      
+      if(message.type === "room-init"){
+        const { body, id } = message;
+
+        const currentUser = await userModel.findOne({ username: socket.username})
+        const otherUser = await userModel.findOne({ username: id});
+
+        if(!otherUser) {
+          socket.send("Room Creation Failed: Username Invalid");
+          return;
+        }
+        if(!currentUser) {
+          socket.send("Room Creation Failed: Current User Invalid");
+          return;
+        }
+
+        const sortedUsernames = [currentUser.username, otherUser.username].sort();
+        const roomId = sortedUsernames.join('_')
+
+        const existingRoom = await roomModel.findOne({ roomId });
+        if(existingRoom){
+          socket.send("Room Already Exists");
+          return;
+        }
+
+        const newRoom = await roomModel.create({
+          roomId,
+          users: [currentUser._id, otherUser._id]
+        });
+
+        await userModel.updateOne({ _id: currentUser._id }, { $addToSet: { rooms: newRoom._id } });
+        await userModel.updateOne({ _id: otherUser._id }, { $addToSet: { rooms: newRoom._id } });
+        socket.send("New Room Created!")
+      }
+
+      else if(message.type === "message"){
+        const { body, id } = message;
+
+        const currentUser = await userModel.findOne({ username: socket.username})
+        if(!currentUser){
+          socket.send("Error sending message: Current User Invalid");
+          return;
+        }
+
+        const room = await roomModel.findOne({ roomId: id })
+        if(!room){
+          socket.send("Error sending message: Room Doesn't Exist")
+          return;
+        }
+        const members = await userModel.find({ _id: { $in: room.users } });
+
+        for(const member of members){
+          const userSocket = store.getUser(member.username);
+          if(userSocket && userSocket !== socket){
+            userSocket.send(JSON.stringify({
+              type: 'message',
+              body,
+              from: socket.username,
+              roomId: id
+            }));
+          }
+        }
+
+        await chatModel.create({
+          message: body,
+          userId:  currentUser._id,
+          roomId: room._id
+        })
+
+      }
+
     });
 
     socket.on('close', () => {

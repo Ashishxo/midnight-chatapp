@@ -4,6 +4,7 @@ import { setupWebSocket } from './utils/websocket.js';
 import dotenv from 'dotenv';
 import connectDB from './utils/dbConnection.js';
 import authRouter from './routes/authRouter.js';
+import chatRouter from './routes/chatRouter.js';
 import cors from 'cors'
 
 dotenv.config();
@@ -14,10 +15,11 @@ connectDB();
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use('/api', authRouter);
+app.use('/api/chat', chatRouter)
 
 const server = http.createServer(app);
 setupWebSocket(server);
 
 server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
-});
+})

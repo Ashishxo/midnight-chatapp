@@ -20,7 +20,13 @@ const userSchema = new Schema({
     lname: {
         type: String,
         trim: true
-    }
+    },
+    rooms: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: 'Room'
+        }
+    ]
 }, { timestamps: true })
 
 export const userModel = mongoose.model('User', userSchema)
