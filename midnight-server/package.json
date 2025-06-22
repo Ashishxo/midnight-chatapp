@@ -22,7 +22,6 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.0",
-    "nanoid": "^5.1.5",
     "ws": "^8.18.2"
   },
   "devDependencies": {

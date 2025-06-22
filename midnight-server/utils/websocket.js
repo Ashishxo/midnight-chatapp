@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken'
 import createStore from './store.js';
 import { roomModel } from '../models/Room.js';
 import { userModel } from '../models/User.js';
-import { nanoid } from 'nanoid';
 import { chatModel } from '../models/Chat.js';
 
 function onSocketError(err){
