@@ -16,8 +16,9 @@ connectDB();
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser())
-app.use('/api', authRouter);
-app.use('/api/chat', chatRouter)
+
+app.use('/auth', authRouter);
+app.use('/chat', chatRouter)
 
 const server = http.createServer(app);
 setupWebSocket(server);
