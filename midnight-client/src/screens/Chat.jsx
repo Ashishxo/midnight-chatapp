@@ -11,6 +11,20 @@ function Chat() {
   const chatRef = useRef(null);
   let messages= []
 
+  useEffect(async() => {
+    try {
+      const res = await fetch('http://localhost:8080/chat/chatlist' , {
+        method:'GET',
+        credentials: 'include',
+      });
+
+      const data = await res.json()
+      console.log(data)
+
+    } catch (error) {
+      console.log(error)
+    }
+  }, []);
  
 
   useEffect(() => {
@@ -22,7 +36,7 @@ function Chat() {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/logout', {
+      const res = await fetch('http://localhost:8080/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
