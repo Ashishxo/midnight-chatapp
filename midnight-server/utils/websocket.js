@@ -1,5 +1,6 @@
 import { WebSocketServer } from 'ws';
 import jwt from 'jsonwebtoken'
+import cookie from 'cookie'
 import createStore from './store.js';
 import { roomModel } from '../models/Room.js';
 import { userModel } from '../models/User.js';
@@ -16,20 +17,13 @@ export function setupWebSocket(server) {
   server.on('upgrade', (request, socket, head) => {
     socket.on('error', onSocketError)
 
-    const protocols = request.headers['sec-websocket-protocol']
-    if(!protocols){
+    const cookies = cookie.parse(request.headers.cookie || '');
+    const token = cookies.token;
+
+    if (!token) {
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
       socket.destroy();
-      console.log('err 1')
-      return;
-    }
-
-    const [protocolName, token] = protocols.split(',').map(p => p.trim())
-
-    if(protocolName !== 'jwt' || !token){
-      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-      socket.destroy();
-      console.log('err 2')
+      console.log('err: no token cookie');
       return;
     }
 

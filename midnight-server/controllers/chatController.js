@@ -11,8 +11,16 @@ export const getContacts = async(req, res) => {
         return
     }
 
-    const rooms = await roomModel.find({ _id: {$in: user.rooms}})
-    const roomIds = rooms.map((room) => room.roomId)
+    const rooms = await roomModel.find({ _id: { $in: user.rooms } }).populate('users', 'username');
 
-    res.status(200).json(roomIds)
+
+    const contacts = rooms.map((room) => {
+        const otherUser = room.users.find(u => u.username !== username);
+      return {
+        roomId: room.roomId,
+        contactName: otherUser?.username || "Unknown"
+      };
+    });
+
+    res.status(200).json(contacts)
 }

@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import connectDB from './utils/dbConnection.js';
 import authRouter from './routes/authRouter.js';
 import chatRouter from './routes/chatRouter.js';
+import cookieParser from 'cookie-parser';
 import cors from 'cors'
 
 dotenv.config();
@@ -14,6 +15,7 @@ connectDB();
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use(cookieParser())
 app.use('/api', authRouter);
 app.use('/api/chat', chatRouter)
 

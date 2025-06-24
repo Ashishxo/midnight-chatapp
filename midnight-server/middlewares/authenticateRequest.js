@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 export const authenticateRequest = (req, res, next) => {
   const SECRET_KEY = process.env.SECRET;
   const token = req.headers.authorization;
-  console.log(SECRET_KEY)
+  
   if (!token) return res.status(401).json({ message: "Unauthorized: Token missing" });
 
   jwt.verify(token, SECRET_KEY, (err, decoded) => {
