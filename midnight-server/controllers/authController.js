@@ -10,7 +10,7 @@ export const register = async(req, res) => {
         const existing = await userModel.findOne({ username });
 
         if(existing){
-            return res.status(400).json({ message: "User Already Exists" });
+            return res.status(400).json({ message: "Username Already Exists" });
         }
 
         const hashed = await bcrypt.hash(password, 10)
@@ -39,15 +39,42 @@ export const login = async(req, res) => {
         
         res.cookie('token', token, {
             httpOnly: true,  
-            sameSite: 'none',
+            sameSite: 'strict',
             secure: process.env.NODE_ENV === 'production',
             maxAge: 30 * 60 * 1000, 
         });
 
-        return res.status(200).json({message: "Logged In successfully"})
+        return res.status(200).json({message: "Logged In successfully", user: {username: user.username, fname: user.fname, lname: user.lname || null}})
     } catch (error) {
         console.log("Error logging in: ", error)
         return res.status(500).json({ message: "Something went wrong" });
     }
     
 }
+
+
+export const logout = (req, res) => {
+    try {
+        res.clearCookie('token', {
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production',
+        });
+        return res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+        console.log("Error during logout:", error);
+        return res.status(500).json({ message: "Something went wrong" });
+    }
+};
+
+export const checkAuth = async (req, res) => {
+        const username = req.user;
+        const user = await userModel.findOne({ username });
+
+        return res.status(200).json({ loggedIn: true, user: { username: user.username, fname: user.fname, lname: user.lname || null }});
+};
+
+
+// app.get('/api/check-auth', authenticateRequest, (req, res) => {
+//     return res.status(200).json({ loggedIn: true, username: req.user });
+//   });

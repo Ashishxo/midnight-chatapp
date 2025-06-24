@@ -1,34 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import wsClient from '../utils/wsConnection';
 import { useRef } from 'react';
+import { useDispatch } from 'react-redux';
+import { logout } from '../redux/authSlice/authSlice';
+
 
 function Chat() {
+  const dispatch = useDispatch()
   const [message, setMessage] = useState('');
   const chatRef = useRef(null);
   let messages= []
 
-  function sendWSMessage(){
-    wsClient.sendMessage()
-  }
+ 
 
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages]);
+
+
+  const handleLogout = async () => {
+    try {
+      const res = await fetch('http://localhost:8080/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+  
+      if (res.ok) {
+        dispatch(logout()); 
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
   
 
-  useEffect(() => {
-    wsClient.subscribeToMessages((msg) => {
-      setMessage(msg); 
-    });
-  }, []);
+  // useEffect(() => {
+  //   wsClient.subscribeToMessages((msg) => {
+  //     setMessage(msg); 
+  //   });
+  // }, []);
 
   return (
     <>
       <div className='h-screen w-full flex font-inter'>
-        <div className='h-full w-14 bg-[#514ED9]'>
-
+        <div className='h-full w-14 bg-[#514ED9] flex flex-col justify-end items-center'>
+          <img onClick={handleLogout} src="/logout.png" className='w-1/2 mb-5' />
         </div>
         <div className='h-full w-full bg-[#212121] flex'>
 

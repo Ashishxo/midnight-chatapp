@@ -1,26 +1,85 @@
 import React from 'react'
 import InputField from '../components/InputField'
 import { Link } from 'react-router'
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import toast from 'react-hot-toast';
 
 function Register() {
+  const navigate = useNavigate()
+  const [form, setForm] = useState({
+    username: '',
+    fname: '',
+    lname: '',
+    password: ''
+  });
+
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  };
+
+  const handleRegister = async () => {
+    try {
+      const res = await fetch('http://localhost:8080/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+        credentials: 'include', // ⬅️ this is important
+      });
+      
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.message || "Registration failed");
+      }
+
+      
+      toast('User Created Sucessfully',
+        {
+          icon: '✅',
+          style: {
+            borderRadius: '10px',
+            background: '#333',
+            color: '#fff',
+          },
+        }
+      );
+      navigate('/')
+    } catch (err) {
+      toast('Error: ' + err.message || 'Error Creating User', {
+        icon: '❌',
+        style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+        },
+      });
+    }
+ 
+  };
+
   return (
     
           <div className='font-inter text-white flex flex-col gap-5 items-center w-3/4'>
 
             <div className='mr-auto mb-5'>
               <h1 className='text-5xl font-bold mb-2'>Create an Account</h1>
-              <p className='ml-2 text-[1.1rem]'>Already have an account? <Link className='underline' to='/login'>Login</Link></p>
+              <p className='ml-2 text-[1.1rem]'>Already have an account? <Link className='underline' to='/'>Login</Link></p>
             </div>
 
-            <InputField className='h-14 text-sm w-full' placeholder='Enter a Username'/>
+            
+
+            <InputField className='h-14 text-sm w-full' placeholder='Enter a Username' name='username' value={form.username} onChange={handleChange}/>
 
             <div className='flex justify-between w-full'>
-              <InputField className='h-14 text-sm w-[48.8%]' placeholder='First Name'/>
-              <InputField className='h-14 text-sm w-[48.8%]' placeholder='Last Name'/>
+              <InputField className='h-14 text-sm w-[48.8%]' placeholder='First Name' name='fname' value={form.fname} onChange={handleChange}/>
+              <InputField className='h-14 text-sm w-[48.8%]' placeholder='Last Name' name='lname' value={form.lname} onChange={handleChange}/>
             </div>
 
-            <InputField className='h-14 text-sm w-full mb-4' placeholder='Password'/>
-            <button className='h-13 w-full text-xl bg-[#514ED9] hover:bg-[#3331BB] rounded-2xl mb-3 duration-200'>
+            <InputField className='h-14 text-sm w-full mb-4' placeholder='Password' name='password' type='password' value={form.password} onChange={handleChange}/>
+            <button onClick={handleRegister} className='h-13 w-full text-xl bg-[#514ED9] hover:bg-[#3331BB] rounded-2xl mb-3 duration-200'>
               Create Account
             </button>
 
