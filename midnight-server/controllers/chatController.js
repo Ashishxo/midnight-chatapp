@@ -41,3 +41,31 @@ export const getChatList = async(req, res) => {
   }
     
 }
+
+
+export const getChats = async (req, res) => {
+
+  const { roomId } = req.params;
+  console.log(req.user)
+  const users = roomId.split('_')
+  if (!users.includes(req.user)) {
+    return res.status(401).json("Unauthorized user.");
+  }
+
+  const limit = parseInt(req.query.limit) || 50;
+  const skip = parseInt(req.query.skip) || 0;
+
+
+  try {
+    const room = await roomModel.findOne({ roomId })
+    
+    if(!room) return res.status(404).json("Room not found");
+    
+    const chats = await chatModel.find({ roomId: room._id }).sort({ createdAt: -1 }).skip(skip).limit(limit).populate("userId", "username")
+    const messages = chats.reverse()
+    res.status(200).json(messages)
+  } catch (error) {
+    res.status(500).json("Server error");
+  }
+  
+}

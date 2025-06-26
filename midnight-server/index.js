@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(cookieParser())
 
 app.use('/auth', authRouter);
-app.use('/chat', chatRouter)
+app.use('/chat', chatRouter);
 
 const server = http.createServer(app);
 setupWebSocket(server);

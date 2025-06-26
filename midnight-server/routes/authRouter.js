@@ -9,4 +9,5 @@ authRouter.post('/login', login);
 authRouter.post('/logout', logout)
 authRouter.get('/check-auth', authenticateRequest, checkAuth)
 
+
 export default authRouter;

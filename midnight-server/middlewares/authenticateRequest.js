@@ -10,7 +10,6 @@ export const authenticateRequest = async (req, res, next) => {
   jwt.verify(token, SECRET_KEY, (err, decoded) => {
     if (err) return res.status(403).json({ message: "Forbidden: Token invalid" });
     req.user = decoded.username;
-    console.log(decoded.username)
     next();
   });
 };
