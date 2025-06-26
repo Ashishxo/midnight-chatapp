@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import wsClient from './utils/wsConnection';
-import Chat from './screens/Chat'
+import Home from './screens/Home'
 import { Route, Routes } from 'react-router';
 import Register from './screens/Register'
 import Login from './screens/Login';
@@ -55,7 +55,7 @@ function App() {
           </Route>
         ) : (
           <>
-            <Route path='/' element={<Chat />} />
+            <Route path='/' element={<Home />} />
             <Route path='*' element={<Navigate to='/' />} />
           </>
         )}

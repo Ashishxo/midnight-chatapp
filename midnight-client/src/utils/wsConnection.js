@@ -1,17 +1,19 @@
 let socket;
 let onMessageCallback = null;
+let reconnectionAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 8;
 
 function connectWebSocket(url) {
-  socket = new WebSocket(url, ["jwt", 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IkF4aGlzaCIsImlhdCI6MTc1MDU3NDE5MX0.uRwjecfW9g698md83jj8JVL0D3wkU1WWO-KqrmVLoI8']);
+  socket = new WebSocket(url);
 
   socket.onopen = () => {
     console.log("✅ WebSocket connected");
   };
 
   socket.onmessage = (event) => {
-    console.log("📨 Received from server:", event.data);
+    console.log(event.data);
     if (onMessageCallback) {
-      onMessageCallback(event.data); // Notify whoever subscribed
+      onMessageCallback(event.data); 
     }
   };
 
@@ -21,12 +23,34 @@ function connectWebSocket(url) {
 
   socket.onclose = () => {
     console.log("🔌 WebSocket disconnected");
+    attemptReconnect(url);
   };
 }
 
-function sendMessage() {
+
+function attemptReconnect(url) {
+  if (reconnectionAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    console.warn("🛑 Max reconnection attempts reached");
+    return;
+  }
+
+  reconnectionAttempts++;
+  const retryDelay = Math.min(1000 * Math.pow(2, reconnectionAttempts), 8000); // exponential backoff max 10s
+
+  console.log(`⏳ Attempting to reconnect in ${retryDelay / 1000}s...`);
+
+  setTimeout(() => {
+    console.log("🔁 Reconnecting...");
+    connectWebSocket(url);
+  }, retryDelay);
+}
+
+
+
+
+function sendMessage(message) {
   if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({message: "ashish"}));
+    socket.send(JSON.stringify(message));
   }
 }
 
