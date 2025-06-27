@@ -19,6 +19,9 @@ app.use(cookieParser())
 
 app.use('/auth', authRouter);
 app.use('/chat', chatRouter);
+app.get('/ping', (req, res) => {
+  res.status(200).send('OK');
+});
 
 const server = http.createServer(app);
 setupWebSocket(server);
