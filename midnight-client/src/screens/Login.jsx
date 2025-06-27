@@ -21,7 +21,7 @@ function Login() {
 
   const handleLogin = async() => {
     try {
-      const res = await fetch('http://localhost:8080/auth/login', {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -45,7 +45,7 @@ function Login() {
           },
         }
       );
-
+      localStorage.setItem('loginTime', Date.now().toString());
       dispatch(login(data.user))
 
     } catch (error) {
@@ -83,7 +83,7 @@ function Login() {
               <span className="flex-grow h-px bg-white"></span> 
             </div>
             
-            <div className='cursor-pointer h-13 w-full text-xl border-[#666666] border-2 rounded-2xl mb-5 flex items-center justify-center gap-4 hover:bg-white hover:text-black duration-200'>
+            <div className='cursor-not-allowed h-13 w-full text-xl border-[#666666] border-2 rounded-2xl mb-5 flex items-center justify-center gap-4 hover:bg-white hover:text-black duration-200'>
               <img src="/google.png" className='h-7' alt="" />
               Google
             </div>

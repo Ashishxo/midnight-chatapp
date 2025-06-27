@@ -10,8 +10,8 @@ import InputField from '../components/InputField.jsx';
 import toast from 'react-hot-toast';
 import { Virtuoso } from 'react-virtuoso';
 
-function ChatList({ messages, user, fetchOlderChats, hasMore, loadingMore, skip }) {
-  const virtuosoRef = useRef(null);
+function ChatList({ messages, user, fetchOlderChats, hasMore, loadingMore, skip, atBottom, setAtBottom, virtuosoRef }) {
+
 
   return (
     <Virtuoso
@@ -32,7 +32,10 @@ function ChatList({ messages, user, fetchOlderChats, hasMore, loadingMore, skip 
           fetchOlderChats();
         }
       }}
-      followOutput
+
+      atBottomStateChange={(isAtBottom) => setAtBottom(isAtBottom)}
+      followOutput={atBottom ? 'smooth' : false}
+      
       initialTopMostItemIndex={messages.length - 1}
       components={{
         Header: () =>
@@ -53,15 +56,20 @@ function ChatList({ messages, user, fetchOlderChats, hasMore, loadingMore, skip 
 
 
 function Home() {
+  const virtuosoRef = useRef(null);
+
   const user = useSelector((state) => state.auth.user)
   const dispatch = useDispatch()
+
+  
+
 
   const fetchOlderChats = () => {
     fetchChats(true);
   };
 
   useEffect(() => {
-    wsClient.connectWebSocket('ws://localhost:8080');
+    wsClient.connectWebSocket(`${import.meta.env.VITE_WS_URL}`);
   }, []);
 
   const [activeRoomId, setActiveRoomId] = useState(null);
@@ -75,6 +83,15 @@ function Home() {
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [atBottom, setAtBottom] = useState(true);
+
+
+  const atBottomRef = useRef(true);
+
+  useEffect(() => {
+    atBottomRef.current = atBottom;
+  }, [atBottom]);
+
 
 
   //const chatRef = useRef(null);
@@ -102,7 +119,7 @@ function Home() {
       if (append) setLoadingMore(true);
       else setLoadingChats(true);
 
-      const res = await fetch(`http://localhost:8080/chat/${activeRoomId}?limit=20&skip=${append ? skip : 0}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/chat/${activeRoomId}?limit=20&skip=${append ? skip : 0}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -140,7 +157,7 @@ function Home() {
   useEffect(() => {
     try {
       async function fetchData(){
-        const res = await fetch('http://localhost:8080/chat/chatlist' , {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/chat/chatlist` , {
         method:'GET',
         credentials: 'include',
       });
@@ -179,7 +196,24 @@ function Home() {
             },
             user: user || {},
           };
-          setMessages((prev) => [...prev, incomingMsg]);
+          setMessages(prev => {
+            const updated = [...prev, incomingMsg];
+          
+            // Only scroll if we're at the bottom
+            if (atBottomRef.current && virtuosoRef.current) {
+              requestAnimationFrame(() => {
+                setTimeout(() => {
+                  virtuosoRef.current.scrollToIndex({
+                    index: updated.length - 1,
+                    behavior: 'smooth',
+                  });
+                }, 50);
+              });
+            }
+          
+            return updated;
+          });
+          
         }
 
 
@@ -248,13 +282,15 @@ function Home() {
 
 
   const handleLogout = async () => {
+
     try {
-      const res = await fetch('http://localhost:8080/auth/logout', {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
   
       if (res.ok) {
+        wsClient.closeWebSocket();
         dispatch(logout()); 
       } else {
         console.error('Logout failed');
@@ -291,7 +327,17 @@ function Home() {
       user: user
     }
 
-    setMessages(prev => [...prev, msg]);
+    setMessages(prev => {
+      const updated = [...prev, msg];
+      setTimeout(() => {
+        virtuosoRef.current?.scrollToIndex({
+          index: updated.length - 1,
+          behavior: 'smooth',
+        });
+      }, 50);
+      return updated;
+    });
+
     setSendMessage("");
 
     setContacts((prevContacts) => {
@@ -319,6 +365,29 @@ function Home() {
     wsClient.sendMessage(msg)
   }
 
+
+
+
+  useEffect(() => {
+    const loginTime = localStorage.getItem('loginTime');
+    if (loginTime) {
+      const expiry = 30 * 60 * 1000; // 30 minutes in milliseconds
+      const now = Date.now();
+      const remaining = expiry - (now - parseInt(loginTime, 10));
+  
+      if (remaining <= 0) {
+        handleLogout(); // Your logout logic
+      } else {
+        const timeout = setTimeout(() => {
+          handleLogout();
+        }, remaining);
+  
+        return () => clearTimeout(timeout); // Cleanup if unmounted
+      }
+    }
+  }, []);
+  
+
   return (
     <>
       {addUser? (<div className='z-10 backdrop-blur-sm w-screen h-screen fixed flex justify-center items-center'>
@@ -331,7 +400,7 @@ function Home() {
             
           </div>
           <h1 className='font-bold text-2xl mb-4 '>Add a Friend</h1>
-          <InputField className='h-12 text-sm w-6/8 mb-2' placeholder='Enter a Username' name='username' value={newContact} onChange={(e) => {setNewContact(e.target.value); console.log(newContact)}}/>
+          <InputField className='h-12 text-sm w-6/8 mb-2' placeholder='Enter a Username' name='username' value={newContact} onChange={(e) => {setNewContact(e.target.value);}}/>
           <button onClick={handleRoomRequest} className='bg-[#514ED9] rounded-2xl w-6/8 h-12 text-sm p-3 font-medium mb-4 hover:bg-[#7f7dd2] cursor-pointer'>Add User</button>
         </div>
       
@@ -410,14 +479,18 @@ function Home() {
                 </div>
 
                 <div className='flex-grow w-full px-5 text-white'>
-                <ChatList
-                  messages={messages}
-                  user={user}
-                  fetchOlderChats={fetchOlderChats}
-                  hasMore={hasMore}
-                  loadingMore={loadingMore}
-                  skip={skip}
-                />
+               <ChatList
+                messages={messages}
+                user={user}
+                fetchOlderChats={fetchOlderChats}
+                hasMore={hasMore}
+                loadingMore={loadingMore}
+                skip={skip}
+                atBottom={atBottom}
+                setAtBottom={setAtBottom} 
+                virtuosoRef={virtuosoRef}
+              />
+
                 </div>
 
 

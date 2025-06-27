@@ -46,7 +46,15 @@ function attemptReconnect(url) {
   }, retryDelay);
 }
 
-
+function closeWebSocket() {
+  if (socket) {
+    socket.onclose = null; // Prevent triggering reconnection
+    socket.close();
+    console.log("🛑 WebSocket manually closed");
+    reconnectionAttempts = 0;
+    socket = null;
+  }
+}
 
 
 function sendMessage(message) {
@@ -62,5 +70,6 @@ function subscribeToMessages(callback) {
 export default {
   connectWebSocket,
   sendMessage,
-  subscribeToMessages
+  subscribeToMessages,
+  closeWebSocket
 };

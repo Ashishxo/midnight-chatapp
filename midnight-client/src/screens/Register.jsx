@@ -22,7 +22,7 @@ function Register() {
 
   const handleRegister = async () => {
     try {
-      const res = await fetch('http://localhost:8080/auth/register', {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -89,7 +89,7 @@ function Register() {
               <span className="flex-grow h-px bg-white"></span> 
             </div>
             
-            <div className='h-13 w-full text-xl border-[#666666] border-2 rounded-2xl mb-5 flex items-center justify-center gap-4 hover:bg-white hover:text-black duration-200 cursor-pointer'>
+            <div className='cursor-not-allowed h-13 w-full text-xl border-[#666666] border-2 rounded-2xl mb-5 flex items-center justify-center gap-4 hover:bg-white hover:text-black duration-200'>
               <img src="/google.png" className='h-7' alt="" />
               Google
             </div>

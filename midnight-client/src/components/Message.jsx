@@ -3,7 +3,6 @@ import React from 'react'
 function Message({message, createdAt, userId, user}) {
 
   let own = user.username == userId
-  console.log(own)
 
     const timeOnly = createdAt.toLocaleTimeString('en-GB', {
         hour: '2-digit',
