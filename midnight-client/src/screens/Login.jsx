@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
 
 function Login() {
   const dispatch = useDispatch()
-
+  const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     username: '',
     password: ''
@@ -21,6 +21,7 @@ function Login() {
 
   const handleLogin = async() => {
     try {
+      setLoading(true)
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -33,7 +34,7 @@ function Login() {
         throw new Error(data.message || "Registration failed");
       }
 
-      
+      setLoading(false)      
 
       toast('Login Successful',
         {
@@ -57,6 +58,7 @@ function Login() {
           color: '#fff',
         },
       });
+      setLoading(false)
     }
   }
 
@@ -72,8 +74,8 @@ function Login() {
             <InputField className='h-14 text-sm w-full' placeholder='Enter your Username' name='username' value={form.username} onChange={handleChange}/>
 
             <InputField className='h-14 text-sm w-full mb-4' placeholder='Password' name='password' value={form.password} onChange={handleChange} type='password'/>
-            <button onClick={handleLogin} className='cursor-pointer h-13 w-full text-xl bg-[#514ED9] hover:bg-[#3331BB] rounded-2xl mb-3 duration-200'>
-              Log In
+            <button onClick={handleLogin} className='cursor-pointer h-13 w-full text-xl bg-[#514ED9] hover:bg-[#3331BB] rounded-2xl mb-3 duration-200 flex justify-center items-center'>
+              {loading ? <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div> : <>Log In</>}
             </button>
           
 

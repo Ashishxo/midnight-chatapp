@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 
 function Register() {
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     username: '',
     fname: '',
@@ -22,6 +23,7 @@ function Register() {
 
   const handleRegister = async () => {
     try {
+      setLoading(true)
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -34,7 +36,7 @@ function Register() {
       if (!res.ok) {
         throw new Error(data.message || "Registration failed");
       }
-
+      setLoading(false)
       
       toast('User Created Sucessfully',
         {
@@ -56,6 +58,7 @@ function Register() {
           color: '#fff',
         },
       });
+      setLoading(false)
     }
  
   };
@@ -79,8 +82,8 @@ function Register() {
             </div>
 
             <InputField className='h-14 text-sm w-full mb-4' placeholder='Password' name='password' type='password' value={form.password} onChange={handleChange}/>
-            <button onClick={handleRegister} className='cursor-pointer h-13 w-full text-xl bg-[#514ED9] hover:bg-[#3331BB] rounded-2xl mb-3 duration-200'>
-              Create Account
+            <button onClick={handleRegister} className='cursor-pointer h-13 w-full text-xl bg-[#514ED9] hover:bg-[#3331BB] rounded-2xl mb-3 duration-200 flex justify-center items-center'>
+              {loading ? <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div> : <>Create Account</>}
             </button>
 
             <div className='flex gap-2 w-full items-center mb-3'>
