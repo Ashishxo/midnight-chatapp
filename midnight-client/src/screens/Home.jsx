@@ -8,12 +8,57 @@ import { useSelector } from 'react-redux';
 import wsClient from '../utils/wsConnection.js'
 import InputField from '../components/InputField.jsx';
 import toast from 'react-hot-toast';
+import { Virtuoso } from 'react-virtuoso';
+
+function ChatList({ messages, user, fetchOlderChats, hasMore, loadingMore, skip }) {
+  const virtuosoRef = useRef(null);
+
+  return (
+    <Virtuoso
+      ref={virtuosoRef}
+      data={messages}
+      firstItemIndex={100000 - skip}
+      itemContent={(index, msg) => (
+        <Message
+          key={msg._id}
+          message={msg.message}
+          createdAt={new Date(msg.createdAt)}
+          userId={msg.userId.username}
+          user={user}
+        />
+      )}
+      startReached={() => {
+        if (hasMore && !loadingMore) {
+          fetchOlderChats();
+        }
+      }}
+      followOutput
+      initialTopMostItemIndex={messages.length - 1}
+      components={{
+        Header: () =>
+          loadingMore ? (
+            <div className="flex justify-center py-2 text-white text-sm opacity-60">
+              <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              Loading older messages...
+            </div>
+          ) : null,
+      }}
+      style={{ height: '100%', width: '100%' }}
+    />
+  );
+}
+
+
+
 
 
 function Home() {
   const user = useSelector((state) => state.auth.user)
   const dispatch = useDispatch()
 
+  const fetchOlderChats = () => {
+    fetchChats(true);
+  };
 
   useEffect(() => {
     wsClient.connectWebSocket('ws://localhost:8080');
@@ -27,8 +72,12 @@ function Home() {
   const [addUser, setAddUser] = useState(false)
   const [newContact, setNewContact] = useState("")
   const [loadingChats, setLoadingChats] = useState(false)
+  const [skip, setSkip] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const chatRef = useRef(null);
+
+  //const chatRef = useRef(null);
   const activeRoomRef = useRef(activeRoomId);
   useEffect(() => {
     activeRoomRef.current = activeRoomId;
@@ -36,32 +85,51 @@ function Home() {
 
 
   const handleRoomSelect = async (roomId, contactName) => {
-    setLoadingChats(true);
+    setSkip(0);
+    setHasMore(true);
     setMessages([]);
+
+    setLoadingChats(true);
     setActiveRoomId(roomId);
     setContactName(contactName);
   };
 
-  useEffect(() => {
+  const fetchChats = async(append = false) => {
     if (!activeRoomId) return;
+    try {
+      if (loadingMore || (!hasMore && append)) return;
 
-    const fetchChats = async() => {
-      try {
-        const res = await fetch(`http://localhost:8080/chat/${activeRoomId}?limit=50&skip=0`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-    
-        const data = await res.json();
+      if (append) setLoadingMore(true);
+      else setLoadingChats(true);
+
+      const res = await fetch(`http://localhost:8080/chat/${activeRoomId}?limit=20&skip=${append ? skip : 0}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+  
+      const data = await res.json();
+      
+      if (data.length < 20) setHasMore(false);
+
+      if (append) {
+        setMessages(prev => [...data, ...prev]);
+        setSkip(prev => prev + data.length);
+      } else {
         setMessages(data);
+        setSkip(data.length);
+      }
 
-      } catch (err) {
-        console.error("Failed to fetch chats:", err);
-      } finally{
-        setLoadingChats(false)
-      } 
-    }
+    } catch (err) {
+      console.error("Failed to fetch chats:", err);
+    } finally{
+      if (append) setLoadingMore(false);
+      else setLoadingChats(false);
+    } 
+  }
 
+
+  useEffect(() => {
+  
     fetchChats();
   }, [activeRoomId])
   
@@ -89,11 +157,11 @@ function Home() {
   }, []);
  
 
-  useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight;
-    }
-  }, [messages]);
+  // useEffect(() => {
+  //   if (chatRef.current) {
+  //     chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  //   }
+  // }, [messages]);
 
   useEffect(()=>{
     wsClient.subscribeToMessages((rawData)=>{
@@ -341,19 +409,17 @@ function Home() {
                   <h1 className='text-white font-bold text-xl font-inter'>{contactName}</h1>
                 </div>
 
-                <div className='flex-grow overflow-y-scroll flex flex-col w-full p-5 text-white' ref={chatRef}>
-
-                {messages.map(msg => (
-                  <Message 
-                    key={msg._id}
-                    message={msg.message}
-                    createdAt={new Date(msg.createdAt)}
-                    userId={msg.userId.username}
-                    user={user}
-                  />
-                ))}  
-
+                <div className='flex-grow w-full px-5 text-white'>
+                <ChatList
+                  messages={messages}
+                  user={user}
+                  fetchOlderChats={fetchOlderChats}
+                  hasMore={hasMore}
+                  loadingMore={loadingMore}
+                  skip={skip}
+                />
                 </div>
+
 
                 <div className='bg-[#2B2B2B] w-full h-1/11 mb-2 rounded-3xl flex items-center pl-10 pt-4 pb-4 pr-6 gap-4 '>
 
