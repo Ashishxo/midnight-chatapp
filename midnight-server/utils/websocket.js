@@ -58,7 +58,7 @@ export function setupWebSocket(server) {
     }
     store.createUser(socket.username, socket);
 
-    socket.send("Heyy");
+    
 
     socket.on('message', async function message(data) {
       const message = JSON.parse(data.toString())
@@ -74,11 +74,11 @@ export function setupWebSocket(server) {
         const otherUser = await userModel.findOne({ username: id});
 
         if(!otherUser) {
-          socket.send("Room Creation Failed: Username Invalid");
+          socket.send(JSON.stringify({type: "error", body: "User not found."}));
           return;
         }
         if(!currentUser) {
-          socket.send("Room Creation Failed: Current User Invalid");
+          socket.send(JSON.stringify({type: "error", body: "Current User Invalid."}));
           return;
         }
 
@@ -87,7 +87,7 @@ export function setupWebSocket(server) {
 
         const existingRoom = await roomModel.findOne({ roomId });
         if(existingRoom){
-          socket.send("Room Already Exists");
+          socket.send(JSON.stringify({type: "error", body: "Contact Already Exists."}));
           return;
         }
 
@@ -96,9 +96,12 @@ export function setupWebSocket(server) {
           users: [currentUser._id, otherUser._id]
         });
 
+        const otherSocket = store.getUser(otherUser.username)
+
         await userModel.updateOne({ _id: currentUser._id }, { $addToSet: { rooms: newRoom._id } });
         await userModel.updateOne({ _id: otherUser._id }, { $addToSet: { rooms: newRoom._id } });
-        socket.send("New Room Created!")
+        socket.send(JSON.stringify({type: "room-init", body: "Room Creation Successful", roomId}))
+        otherSocket?.send(JSON.stringify({type: "room-init", body: "Room Creation Successful", roomId}))
       }
 
       else if(message.type === "message"){
@@ -106,13 +109,13 @@ export function setupWebSocket(server) {
 
         const currentUser = await userModel.findOne({ username: socket.username})
         if(!currentUser){
-          socket.send("Error sending message: Current User Invalid");
+          socket.send(JSON.stringify({type: "error", body: "Current User Invalid."}));
           return;
         }
 
         const room = await roomModel.findOne({ roomId: id })
         if(!room){
-          socket.send("Error sending message: Room Doesn't Exist")
+          socket.send(JSON.stringify({type: "error", body: "Room doesn't Exists."}))
           return;
         }
         const members = await userModel.find({ _id: { $in: room.users } });
