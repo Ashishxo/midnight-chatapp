@@ -5,6 +5,10 @@ let reconnectionAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 8;
 
 function connectWebSocket(url) {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    console.warn("WebSocket already connected.");
+    return;
+  }
   socket = new WebSocket(url);
 
   socket.onopen = () => {
