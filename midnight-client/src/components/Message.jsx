@@ -14,7 +14,7 @@ function Message({message, createdAt, userId, user}) {
     <>
 
     {own? (
-    <div className='h-20 max-w-[70%] w-fit flex flex-col self-end'>
+    <div className='h-20 max-w-[70%] w-fit flex flex-col self-end mb-2'>
       <p className='bg-[#514ED9] w-full p-4 rounded-l-2xl rounded-tr-2xl font-inter font-light text-[1.rem] break-words'>{message}</p>
       <span className='self-end mr-4 mt-1 text-[0.7rem] font-inter font-light'>{timeOnly}</span>
     </div>

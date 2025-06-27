@@ -1,3 +1,4 @@
+
 let socket;
 let onMessageCallback = null;
 let reconnectionAttempts = 0;
@@ -11,7 +12,7 @@ function connectWebSocket(url) {
   };
 
   socket.onmessage = (event) => {
-    console.log(event.data);
+    
     if (onMessageCallback) {
       onMessageCallback(event.data); 
     }

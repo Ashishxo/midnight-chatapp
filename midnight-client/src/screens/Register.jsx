@@ -62,7 +62,7 @@ function Register() {
 
   return (
     
-          <div className='font-inter text-white flex flex-col gap-5 items-center w-3/4'>
+          <form onSubmit={(e)=> e.preventDefault()} className='font-inter text-white flex flex-col gap-5 items-center w-3/4'>
 
             <div className='mr-auto mb-5'>
               <h1 className='text-5xl font-bold mb-2'>Create an Account</h1>
@@ -79,7 +79,7 @@ function Register() {
             </div>
 
             <InputField className='h-14 text-sm w-full mb-4' placeholder='Password' name='password' type='password' value={form.password} onChange={handleChange}/>
-            <button onClick={handleRegister} className='h-13 w-full text-xl bg-[#514ED9] hover:bg-[#3331BB] rounded-2xl mb-3 duration-200'>
+            <button onClick={handleRegister} className='cursor-pointer h-13 w-full text-xl bg-[#514ED9] hover:bg-[#3331BB] rounded-2xl mb-3 duration-200'>
               Create Account
             </button>
 
@@ -89,13 +89,13 @@ function Register() {
               <span className="flex-grow h-px bg-white"></span> 
             </div>
             
-            <button className='h-13 w-full text-xl border-[#666666] border-2 rounded-2xl mb-5 flex items-center justify-center gap-4 hover:bg-white hover:text-black duration-200'>
+            <div className='h-13 w-full text-xl border-[#666666] border-2 rounded-2xl mb-5 flex items-center justify-center gap-4 hover:bg-white hover:text-black duration-200 cursor-pointer'>
               <img src="/google.png" className='h-7' alt="" />
               Google
-            </button>
+            </div>
            
 
-          </div>
+          </form>
       
   )
 }

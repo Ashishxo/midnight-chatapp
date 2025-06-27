@@ -6,6 +6,8 @@ import ChatListItem from '../components/ChatListItem';
 import Message from '../components/Message';
 import { useSelector } from 'react-redux';
 import wsClient from '../utils/wsConnection.js'
+import InputField from '../components/InputField.jsx';
+import toast from 'react-hot-toast';
 
 
 function Home() {
@@ -22,6 +24,9 @@ function Home() {
   const [contacts, setContacts] = useState([]);
   const [contactName, setContactName] = useState("")
   const [sendMessage, setSendMessage] = useState("")
+  const [addUser, setAddUser] = useState(false)
+  const [newContact, setNewContact] = useState("")
+  const [loadingChats, setLoadingChats] = useState(false)
 
   const chatRef = useRef(null);
   const activeRoomRef = useRef(activeRoomId);
@@ -31,6 +36,8 @@ function Home() {
 
 
   const handleRoomSelect = async (roomId, contactName) => {
+    setLoadingChats(true);
+    setMessages([]);
     setActiveRoomId(roomId);
     setContactName(contactName);
   };
@@ -50,7 +57,9 @@ function Home() {
 
       } catch (err) {
         console.error("Failed to fetch chats:", err);
-      }      
+      } finally{
+        setLoadingChats(false)
+      } 
     }
 
     fetchChats();
@@ -90,7 +99,6 @@ function Home() {
     wsClient.subscribeToMessages((rawData)=>{
       
       const data = JSON.parse(rawData)
-      
       if(data.type === 'message'){
 
         if (data.roomId === activeRoomRef.current){
@@ -120,8 +128,53 @@ function Home() {
           const filtered = prevContacts.filter((c) => c.roomId !== data.roomId);
           return [updated, ...filtered];
         });
-        
+        return;
       }
+
+      if(data.type === "error"){
+        toast('Error: ' + data.body || 'Error processing request.', {
+          icon: '❌',
+          style: {
+            borderRadius: '10px',
+            background: '#333',
+            color: '#fff',
+          },
+        });
+
+        return
+      }
+
+      if(data.type === "room-init"){
+        const userList = data.roomId.split('_')
+        const newContactName = userList.find((u)=> u !== user.username) || "Unknown"
+        let newRoom = {
+          roomId: data.roomId,
+          contactName: newContactName,
+          lastMessage: "",
+          lastMessageAt: null
+        }
+
+        setContacts((prevContacts) => {
+          const alreadyExists = prevContacts.some(contact => contact.roomId === data.roomId);
+          if (alreadyExists) return prevContacts;
+          return [newRoom, ...prevContacts];
+        })
+
+       
+          toast(`${newContactName} was added as a friend!`,
+            {
+              icon: '👋🏻',
+              style: {
+                borderRadius: '10px',
+                background: '#333',
+                color: '#fff',
+              },
+            }
+          );
+        
+        setAddUser(false)
+      }
+
     })
   }, [])
 
@@ -147,7 +200,6 @@ function Home() {
   function handleInputChange(e){
     const msg = e.target.value;
     setSendMessage(msg);
-    console.log(msg)
   }
 
   let chatKey = 1;
@@ -158,7 +210,7 @@ function Home() {
       body: sendMessage,
       id: activeRoomId
     }
-
+    if(sendMessage == "") return;
     wsClient.sendMessage(msg);
 
     msg = {
@@ -172,13 +224,50 @@ function Home() {
     }
 
     setMessages(prev => [...prev, msg]);
-    console.log(messages)
+    setSendMessage("");
+
+    setContacts((prevContacts) => {
+      const existing = prevContacts.find((c) => c.roomId === activeRoomId);
+      if (!existing) return prevContacts;
+
+      const updated = {
+        ...existing,
+        lastMessage: sendMessage,
+        lastMessageAt: new Date(),
+      };
+
+      const filtered = prevContacts.filter((c) => c.roomId !== activeRoomId);
+      return [updated, ...filtered];
+    });
   }
- 
+
+  function handleRoomRequest(){
+    let msg = {
+      type: "room-init",
+      body: "New Room Request",
+      id: newContact
+    }
+
+    wsClient.sendMessage(msg)
+  }
 
   return (
     <>
-
+      {addUser? (<div className='z-10 backdrop-blur-sm w-screen h-screen fixed flex justify-center items-center'>
+        <div className='w-fit min-w-[28rem] min-h-1/4 bg-[#2B2B2B] opacity-100 rounded-2xl text-white p-5 flex flex-col items-center font-inter'>
+          
+          <div className='w-full flex justify-end pr-4 '> 
+            <div className='rounded-xl hover:bg-[#3F3F3F] p-2 cursor-pointer' onClick={()=> {setAddUser((state) => !state);}}>
+              <img src="/close.png" className='h-4'/>
+            </div>
+            
+          </div>
+          <h1 className='font-bold text-2xl mb-4 '>Add a Friend</h1>
+          <InputField className='h-12 text-sm w-6/8 mb-2' placeholder='Enter a Username' name='username' value={newContact} onChange={(e) => {setNewContact(e.target.value); console.log(newContact)}}/>
+          <button onClick={handleRoomRequest} className='bg-[#514ED9] rounded-2xl w-6/8 h-12 text-sm p-3 font-medium mb-4 hover:bg-[#7f7dd2] cursor-pointer'>Add User</button>
+        </div>
+      
+      </div>):(<></>)}
 
       {/* Main Application Div */}
       <div className='h-screen w-full flex font-inter'>
@@ -186,6 +275,11 @@ function Home() {
 
         {/* Left Options Bar */}
         <div className='h-full w-14 bg-[#514ED9] flex flex-col justify-end items-center'>
+
+
+          <div className='w-4/6 p-2 rounded-xl hover:bg-[#5c5af2] hover:cursor-pointer h-fit flex items-center justify-center mb-5'>
+            <img onClick={()=> {setAddUser((state) => !state);}} src="/newUser.png"  />
+          </div>
 
           {/* Logout Button */}
           <div className='w-4/6 p-2 rounded-xl hover:bg-[#5c5af2] hover:cursor-pointer h-fit flex items-center justify-center mb-5'>
@@ -198,15 +292,15 @@ function Home() {
 
 
           {/* Chat List */}
-          <div className='w-[30%] bg-[#2B2B2B] h-full rounded-r-[4rem] pl-5 pr-5 pt-24 flex flex-col pb-7'>
+          <div className='w-[30%] bg-[#2B2B2B] h-full rounded-r-[3.5rem] pl-5 pr-5 pt-24 flex flex-col pb-7'>
 
             <h1 className='text-white text-4xl font-bold mb-8'>Chats</h1>
 
 
             {/* Search Bar */}
-            <div className='w-full flex bg-[#212121] rounded-3xl items-center pr-5 p-2 pl-5 mb-8'>
-              <input type="text" placeholder='Search a chat' className='min-w-10 text-[#D0D0D0] text-[0.9rem] mr-2 outline-none flex-grow'/>
-              <img src="/searchIcon.png" className='h-6 ' />
+            <div className='cursor-not-allowed w-full flex bg-[#212121] rounded-3xl items-center pr-5 p-2 pl-5 mb-8 '>
+              <input type="text" placeholder='Search a chat' className='cursor-not-allowed min-w-10 text-[#D0D0D0] text-[0.9rem] mr-2 outline-none flex-grow'/>
+              <img src="/searchIcon.png" className='cursor-not-allowed h-6 ' />
             </div>
 
             <div className='overflow-y-scroll flex-grow'>
@@ -217,7 +311,7 @@ function Home() {
                 key={msg.roomId}
                 contactName={msg.contactName}
                 lastMessage={msg.lastMessage}
-                lastMessageAt={new Date(msg.lastMessageAt)}
+                lastMessageAt={msg.lastMessageAt ? new Date(msg.lastMessageAt) : null}
                 roomId={msg.roomId}
                 onClick={handleRoomSelect}
                 activeRoomId={activeRoomId}
@@ -228,41 +322,83 @@ function Home() {
             </div>
 
           </div>
-          <div className='w-[70%] h-full p-4 flex flex-col'>
 
-            <div className='bg-[#2B2B2B] w-full min-h-[6rem] h-[6rem] rounded-3xl flex items-center pl-10 mb-1'>
-              <img src="/profile.png" className='h-14 rounded-full mr-10'/>
-              <h1 className='text-white font-bold text-xl font-inter'>{contactName}</h1>
-            </div>
+          {activeRoomId ? (
+          <>
+            {loadingChats? (
 
-            <div className='flex-grow overflow-y-scroll flex flex-col w-full p-5 text-white' ref={chatRef}>
-
-            {messages.map(msg => (
-              <Message 
-                key={msg._id}
-                message={msg.message}
-                createdAt={new Date(msg.createdAt)}
-                userId={msg.userId.username}
-                user={user}
-              />
-            ))}  
-
-            </div>
-
-            <div className='bg-[#2B2B2B] w-full h-1/11 mb-2 rounded-3xl flex items-center pl-10 pt-4 pb-4 pr-6 gap-4 '>
-
-              <div className='p-3 hover:bg-[#4F4F4F] hover:cursor-pointer rounded-xl'>
-                <img src="/imageIcon.png" className='h-6' />
+              <div className='w-[70%] h-full p-4 flex flex-col justify-center items-center'>
+                <img src="/greyLogo.png" className='h-8 mb-4' />
+                <p className='text-2xl font-medium font-mono text-[#5F5F5F]'>Loading...</p>
               </div>
-              
-              <input type="text" className='text-white text-[1rem] w-full h-full pl-3 outline-none' placeholder='Type a Message' value={sendMessage} onChange={handleInputChange}/>
-              <button className='hover:bg-[#4F4F4F] hover:cursor-pointer rounded-xl p-4' onClick={handleSendMessage}>
-                <img src="/send.png" className='h-4'/>
-              </button>
 
-            </div>
+            ):(<>
             
-          </div>
+              <div className='w-[70%] h-full p-4 flex flex-col'>
+
+                <div className='bg-[#2B2B2B] w-full min-h-[6rem] h-[6rem] rounded-3xl flex items-center pl-10 mb-1'>
+                  <img src="/profile.png" className='h-14 rounded-full mr-10'/>
+                  <h1 className='text-white font-bold text-xl font-inter'>{contactName}</h1>
+                </div>
+
+                <div className='flex-grow overflow-y-scroll flex flex-col w-full p-5 text-white' ref={chatRef}>
+
+                {messages.map(msg => (
+                  <Message 
+                    key={msg._id}
+                    message={msg.message}
+                    createdAt={new Date(msg.createdAt)}
+                    userId={msg.userId.username}
+                    user={user}
+                  />
+                ))}  
+
+                </div>
+
+                <div className='bg-[#2B2B2B] w-full h-1/11 mb-2 rounded-3xl flex items-center pl-10 pt-4 pb-4 pr-6 gap-4 '>
+
+                  <div className='cursor-not-allowed p-3 hover:bg-[#4F4F4F] rounded-xl'>
+                    <img src="/imageIcon.png" className='cursor-not-allowed h-6' />
+                  </div>
+                  
+                  
+                  <input type="text" className='text-white text-[1rem] w-full h-full pl-3 outline-none' 
+                  placeholder='Type a Message' 
+                  
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault(); 
+                      handleSendMessage();
+                    }
+                  }} 
+                  value={sendMessage} 
+                  onChange={handleInputChange}/>
+
+
+                  <button className='hover:bg-[#4F4F4F] cursor-pointer rounded-xl p-4' onClick={handleSendMessage}>
+                    <img src="/send.png" className='h-4'/>
+                  </button>
+
+                </div>
+                
+              </div>
+            
+            </>)}
+            
+            
+          
+          
+          </>
+          ):(
+
+
+            <div className='w-[70%] h-full p-4 flex flex-col justify-center items-center'>
+              <img src="/greyLogo.png" className='h-8 mb-4' />
+              <p className='text-2xl font-medium font-mono text-[#5F5F5F]'>Welcome to Midnight Chat App</p>
+            </div>
+          
+          )}
+          
 
         </div>
       </div>
