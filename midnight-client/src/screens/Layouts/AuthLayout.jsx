@@ -6,14 +6,14 @@ function AuthLayout() {
   const location = useLocation();
 
   return (
-    <div className='h-screen bg-[#2B2B2B] flex p-6 gap-10 justify-center'>
+    <div className='h-screen bg-[#2B2B2B] flex md:p-6 gap-10 justify-center'>
         
 
-      <div className='w-[46%] bg-linear-120 from-[#3C00FF] to-[#240099] rounded-4xl flex justify-center items-center'>
-        <img src="/logoName.png" className='h-52' />
+      <div className='w-[46%] bg-linear-120 from-[#3C00FF] to-[#240099] rounded-4xl hidden md:flex justify-center items-center'>
+        <img src="/logoName.png" className='w-2/3' />
       </div>
 
-      <div className='w-[48%] flex justify-center items-center overflow-hidden'>
+      <div className='w-full md:w-[48%] flex justify-center items-center'>
        
                 <Outlet />
             
