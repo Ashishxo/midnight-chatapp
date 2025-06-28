@@ -8,7 +8,7 @@ import AuthLayout from './screens/Layouts/AuthLayout';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate } from 'react-router';
 import { login, logout } from './redux/authSlice/authSlice';
-import { Toaster } from 'react-hot-toast';
+
 
 function App() {
   const dispatch = useDispatch()
@@ -45,7 +45,7 @@ function App() {
   }
   return (
     <>
-      <Toaster/>
+      
       <Routes>
             {!isLoggedIn ? (
           <Route path='/' element={<AuthLayout />}>

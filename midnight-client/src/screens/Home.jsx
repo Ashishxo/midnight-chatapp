@@ -3,74 +3,37 @@ import { useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { logout } from '../redux/authSlice/authSlice';
 import ChatListItem from '../components/ChatListItem';
-import Message from '../components/Message';
 import { useSelector } from 'react-redux';
 import wsClient from '../utils/wsConnection.js'
 import InputField from '../components/InputField.jsx';
 import toast from 'react-hot-toast';
-import { Virtuoso } from 'react-virtuoso';
-
-function ChatList({ messages, user, fetchOlderChats, hasMore, loadingMore, skip, atBottom, setAtBottom, virtuosoRef }) {
-
-
-  return (
-    <Virtuoso
-      ref={virtuosoRef}
-      data={messages}
-      firstItemIndex={100000 - skip}
-      itemContent={(index, msg) => (
-        <Message
-          key={msg._id}
-          message={msg.message}
-          createdAt={new Date(msg.createdAt)}
-          userId={msg.userId.username}
-          user={user}
-        />
-      )}
-      startReached={() => {
-        if (hasMore && !loadingMore) {
-          fetchOlderChats();
-        }
-      }}
-
-      atBottomStateChange={(isAtBottom) => setAtBottom(isAtBottom)}
-      followOutput={atBottom ? 'smooth' : false}
-      
-      initialTopMostItemIndex={messages.length - 1}
-      components={{
-        Header: () =>
-          loadingMore ? (
-            <div className="flex justify-center py-2 text-white text-sm opacity-60">
-              <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-              Loading older messages...
-            </div>
-          ) : null,
-      }}
-      style={{ height: '100%', width: '100%' }}
-    />
-  );
-}
-
-
-
+import ChatList from '../components/ChatList.jsx';
 
 
 function Home() {
   const virtuosoRef = useRef(null);
-
+  const notificationSound = useRef(null);
   const user = useSelector((state) => state.auth.user)
   const dispatch = useDispatch()
 
   
-
+  
 
   const fetchOlderChats = () => {
     fetchChats(true);
   };
 
   useEffect(() => {
-    wsClient.connectWebSocket(`${import.meta.env.VITE_WS_URL}`);
+    notificationSound.current = new Audio('/notification.mp3');
+    notificationSound.current.volume = 0.3; // adjust volume as needed
+
+    wsClient.connectWebSocket(import.meta.env.VITE_WS_URL);
+  
+    return () => {
+      wsClient.closeWebSocket(); // Cleanup on unmount or route change
+    };
   }, []);
+  
 
   const [activeRoomId, setActiveRoomId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -85,14 +48,24 @@ function Home() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [atBottom, setAtBottom] = useState(true);
 
-
+  const isTabFocused = useRef(true);
   const atBottomRef = useRef(true);
 
   useEffect(() => {
     atBottomRef.current = atBottom;
   }, [atBottom]);
 
-
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isTabFocused.current = document.visibilityState === "visible";
+    };
+  
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+  
 
   //const chatRef = useRef(null);
   const activeRoomRef = useRef(activeRoomId);
@@ -214,6 +187,16 @@ function Home() {
             return updated;
           });
           
+        }
+
+        if (
+          notificationSound.current &&
+          (data.roomId !== activeRoomRef.current ||
+          !isTabFocused.current)
+        ) {
+          notificationSound.current.play().catch((err) => {
+            console.warn("🔇 Autoplay blocked:", err);
+          });
         }
 
 
@@ -407,11 +390,11 @@ function Home() {
       </div>):(<></>)}
 
       {/* Main Application Div */}
-      <div className='h-screen w-full flex font-inter'>
+      <div className='h-screen w-full flex font-inter bg-[#212121]'>
 
 
         {/* Left Options Bar */}
-        <div className='h-full w-14 bg-[#514ED9] flex flex-col justify-end items-center'>
+        <div className='h-full w-[3.7%] bg-[#514ED9] flex flex-col justify-end items-center'>
 
 
           <div className='w-4/6 p-2 rounded-xl hover:bg-[#5c5af2] hover:cursor-pointer h-fit flex items-center justify-center mb-5'>
@@ -425,11 +408,11 @@ function Home() {
         </div>
 
         
-        <div className='h-full w-full bg-[#212121] flex'>
+        
 
 
           {/* Chat List */}
-          <div className='w-[30%] bg-[#2B2B2B] h-full rounded-r-[3.5rem] pl-5 pr-5 pt-24 flex flex-col pb-7'>
+          <div className='w-[26.3%] bg-[#2B2B2B] h-full rounded-r-[3.5rem] pl-5 pr-5 pt-24 flex flex-col pb-7'>
 
             <h1 className='text-white text-4xl font-bold mb-8'>Chats</h1>
 
@@ -464,14 +447,14 @@ function Home() {
           <>
             {loadingChats? (
 
-              <div className='w-[70%] h-full p-4 flex flex-col justify-center items-center'>
+              <div className='w-[70%] max-w-[70%] h-full p-4 flex flex-col justify-center items-center'>
                 <img src="/greyLogo.png" className='h-8 mb-4' />
                 <p className='text-2xl font-medium font-mono text-[#5F5F5F]'>Loading...</p>
               </div>
 
             ):(<>
             
-              <div className='w-[70%] h-full p-4 flex flex-col'>
+              <div className='w-[70%] max-w-[70%] h-full p-4 flex flex-col'>
 
                 <div className='bg-[#2B2B2B] w-full min-h-[6rem] h-[6rem] rounded-3xl flex items-center pl-10 mb-1'>
                   <img src="/profile.png" className='h-14 rounded-full mr-10'/>
@@ -539,7 +522,7 @@ function Home() {
           )}
           
 
-        </div>
+        
       </div>
     </>
   );
