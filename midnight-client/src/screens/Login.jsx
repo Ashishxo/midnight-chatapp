@@ -64,7 +64,7 @@ function Login() {
 
   
   return (
-    <form onSubmit={(e)=> e.preventDefault()} className='font-inter text-white flex flex-col gap-4 md:gap-5 items-center w-4/6'>
+    <form onSubmit={(e)=> e.preventDefault()} className='font-inter text-white flex flex-col gap-4 md:gap-5 items-center w-5/6 md:w-4/6'>
 
             <div className='flex flex-col gap-2 items-center md:hidden'>
               <img src="/greyLogo.png" className='h-10 w-fit ' />

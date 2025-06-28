@@ -65,7 +65,7 @@ function Register() {
 
   return (
     
-          <form onSubmit={(e)=> e.preventDefault()} className='font-inter text-white flex flex-col gap-5 items-center w-3/4'>
+          <form onSubmit={(e)=> e.preventDefault()} className='font-inter text-white flex flex-col gap-5 items-center w-5/6 md:w-3/4'>
 
             <div className='flex flex-col gap-2 items-center md:hidden'>
               <img src="/greyLogo.png" className='h-10 w-fit ' />
