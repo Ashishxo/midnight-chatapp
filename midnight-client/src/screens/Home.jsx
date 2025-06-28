@@ -480,21 +480,21 @@ function Home() {
           <>
             {loadingChats? (
 
-              <div className='w-[88%] sm:w-[92%] md:w-[55%] lg:w-[70%] max-w-[70%] h-full p-4 flex flex-col justify-center items-center'>
+              <div className='w-[88%] sm:w-[92%] md:w-[55%] lg:w-[70%] max-w-[70%] h-full p-2 md:p-4 flex flex-col justify-center items-center'>
                 <img src="/greyLogo.png" className='h-8 mb-4' />
                 <p className='text-center md:text-2xl font-medium font-mono text-[#5F5F5F]'>Loading...</p>
               </div>
 
             ):(<>
             
-              <div className='w-[88%] sm:w-[92%] md:w-[55%] lg:w-[70%] lg:max-w-[70%] h-full p-4 flex flex-col'>
+              <div className='w-[88%] sm:w-[92%] md:w-[55%] lg:w-[70%] lg:max-w-[70%] h-full p-2 md:p-4 flex flex-col'>
 
                 <div className='bg-[#2B2B2B] w-full min-h-[6rem] h-[6rem] rounded-3xl flex items-center pl-10 mb-1'>
                   <img src="/profile.png" className='h-14 rounded-full mr-10'/>
                   <h1 className='text-white font-bold text-xl font-inter'>{contactName}</h1>
                 </div>
 
-                <div className='flex-grow w-full px-5 text-white'>
+                <div className='flex-grow w-full md:px-5 text-white'>
                <ChatList
                 messages={messages}
                 user={user}
@@ -547,7 +547,7 @@ function Home() {
           ):(
 
 
-            <div className='w-[88%] sm:w-[92%] md:w-[55%] lg:w-[70%] lg:max-w-[70%] h-full p-4 flex flex-col justify-center items-center'>
+            <div className='w-[88%] sm:w-[92%] md:w-[55%] lg:w-[70%] lg:max-w-[70%] p-1 h-full md:p-4 flex flex-col justify-center items-center'>
               <img src="/greyLogo.png" className='h-8 mb-4' />
               <p className='text-center md:text-2xl font-medium font-mono text-[#5F5F5F]'>Welcome to Midnight Chat App</p>
             </div>
