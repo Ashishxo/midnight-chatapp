@@ -409,7 +409,7 @@ function Home() {
       </div>):(<></>)}
 
       {/* Main Application Div */}
-      <div className='h-screen w-full flex font-inter bg-[#212121]'>
+      <div className='h-[95vh] sm:h-screen w-full flex font-inter bg-[#212121]'>
 
 
         {/* Left Options Bar */}
@@ -482,7 +482,7 @@ function Home() {
 
               <div className='w-[88%] sm:w-[92%] md:w-[55%] lg:w-[70%] max-w-[70%] h-full p-4 flex flex-col justify-center items-center'>
                 <img src="/greyLogo.png" className='h-8 mb-4' />
-                <p className='text-2xl font-medium font-mono text-[#5F5F5F]'>Loading...</p>
+                <p className='text-center md:text-2xl font-medium font-mono text-[#5F5F5F]'>Loading...</p>
               </div>
 
             ):(<>
@@ -547,9 +547,9 @@ function Home() {
           ):(
 
 
-            <div className='w-[70%] h-full p-4 flex flex-col justify-center items-center'>
+            <div className='w-[88%] sm:w-[92%] md:w-[55%] lg:w-[70%] lg:max-w-[70%] h-full p-4 flex flex-col justify-center items-center'>
               <img src="/greyLogo.png" className='h-8 mb-4' />
-              <p className='text-2xl font-medium font-mono text-[#5F5F5F]'>Welcome to Midnight Chat App</p>
+              <p className='text-center md:text-2xl font-medium font-mono text-[#5F5F5F]'>Welcome to Midnight Chat App</p>
             </div>
           
           )}
