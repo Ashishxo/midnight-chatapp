@@ -9,8 +9,22 @@ import InputField from '../components/InputField.jsx';
 import toast from 'react-hot-toast';
 import ChatList from '../components/ChatList.jsx';
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isMobile;
+}
+
 
 function Home() {
+
+  const isMobile = useIsMobile();
   const virtuosoRef = useRef(null);
   const notificationSound = useRef(null);
   const user = useSelector((state) => state.auth.user)
@@ -47,6 +61,8 @@ function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [atBottom, setAtBottom] = useState(true);
+  const [showChatList, setShowChatList] = useState(false);
+
 
   const isTabFocused = useRef(true);
   const atBottomRef = useRef(true);
@@ -82,6 +98,7 @@ function Home() {
     setLoadingChats(true);
     setActiveRoomId(roomId);
     setContactName(contactName);
+    if (isMobile) setShowChatList(false);
   };
 
   const fetchChats = async(append = false) => {
@@ -124,6 +141,7 @@ function Home() {
   }, [activeRoomId])
   
     
+  
   
   
 
@@ -373,8 +391,9 @@ function Home() {
 
   return (
     <>
-      {addUser? (<div className='z-10 backdrop-blur-sm w-screen h-screen fixed flex justify-center items-center'>
-        <div className='w-fit min-w-[28rem] min-h-1/4 bg-[#2B2B2B] opacity-100 rounded-2xl text-white p-5 flex flex-col items-center font-inter'>
+      {addUser? (
+      <div className='z-50 backdrop-blur-sm w-screen h-screen fixed flex justify-center items-center'>
+        <div className='w-fit min-w-5/6 md:min-w-[28rem] min-h-1/4 bg-[#2B2B2B] opacity-100 rounded-2xl text-white p-5 flex flex-col items-center font-inter'>
           
           <div className='w-full flex justify-end pr-4 '> 
             <div className='rounded-xl hover:bg-[#3F3F3F] p-2 cursor-pointer' onClick={()=> {setAddUser((state) => !state);}}>
@@ -394,17 +413,22 @@ function Home() {
 
 
         {/* Left Options Bar */}
-        <div className='h-full w-[3.7%] bg-[#514ED9] flex flex-col justify-end items-center'>
+        <div className='h-full w-[12%] sm:w-[8%] md:w-[6%] lg:w-[3.7%] bg-[#514ED9] flex flex-col justify-end items-center'>
+
+          <div className='md:hidden max-w-5/6  max p-2 rounded-xl hover:bg-[#5c5af2] hover:cursor-pointer h-fit flex items-center justify-center mb-auto mt-10'>
+            <img src="/messageIcon.png" onClick={() => setShowChatList(true)} className='max-h-7'/>
+          </div>
 
 
-          <div className='w-4/6 p-2 rounded-xl hover:bg-[#5c5af2] hover:cursor-pointer h-fit flex items-center justify-center mb-5'>
-            <img onClick={()=> {setAddUser((state) => !state);}} src="/newUser.png"  />
+          <div className='w-5/6 p-2 rounded-xl hover:bg-[#5c5af2] hover:cursor-pointer h-fit flex items-center justify-center mb-5'>
+            <img onClick={()=> {setAddUser((state) => !state);}} src="/newUser.png" className='max-h-7' />
           </div>
 
           {/* Logout Button */}
-          <div className='w-4/6 p-2 rounded-xl hover:bg-[#5c5af2] hover:cursor-pointer h-fit flex items-center justify-center mb-5'>
-            <img onClick={handleLogout} src="/logout.png"  />
+          <div className='w-5/6 p-2 rounded-xl hover:bg-[#5c5af2] hover:cursor-pointer h-fit flex items-center justify-center mb-5'>
+            <img onClick={handleLogout} src="/logout.png" className='max-h-7' />
           </div>
+
         </div>
 
         
@@ -412,8 +436,16 @@ function Home() {
 
 
           {/* Chat List */}
-          <div className='w-[26.3%] bg-[#2B2B2B] h-full rounded-r-[3.5rem] pl-5 pr-5 pt-24 flex flex-col pb-7'>
+          <div className={`z-10 transform transition-transform duration-300 ease-in-out
+            ${isMobile ? 'fixed top-0 left-0 w-4/5 max-w-[22rem] h-full' : 'md:relative md:flex'}
+            ${isMobile ? (showChatList ? 'translate-x-0' : '-translate-x-full') : ''}
+            md:w-[39%] lg:w-[26.3%] bg-[#2B2B2B] rounded-r-[3.5rem] pl-5 pr-5 pt-24 flex-col pb-7
+          `}>
 
+
+            <div className='md:hidden flex justify-end mb-4'>
+              <button className='text-white text-xl' onClick={() => setShowChatList(false)}>✕</button>
+            </div>
             <h1 className='text-white text-4xl font-bold mb-8'>Chats</h1>
 
 
@@ -435,6 +467,7 @@ function Home() {
                 roomId={msg.roomId}
                 onClick={handleRoomSelect}
                 activeRoomId={activeRoomId}
+                
               />
             ))}
 
@@ -447,14 +480,14 @@ function Home() {
           <>
             {loadingChats? (
 
-              <div className='w-[70%] max-w-[70%] h-full p-4 flex flex-col justify-center items-center'>
+              <div className='w-[88%] sm:w-[92%] md:w-[55%] lg:w-[70%] max-w-[70%] h-full p-4 flex flex-col justify-center items-center'>
                 <img src="/greyLogo.png" className='h-8 mb-4' />
                 <p className='text-2xl font-medium font-mono text-[#5F5F5F]'>Loading...</p>
               </div>
 
             ):(<>
             
-              <div className='w-[70%] max-w-[70%] h-full p-4 flex flex-col'>
+              <div className='w-[88%] sm:w-[92%] md:w-[55%] lg:w-[70%] lg:max-w-[70%] h-full p-4 flex flex-col'>
 
                 <div className='bg-[#2B2B2B] w-full min-h-[6rem] h-[6rem] rounded-3xl flex items-center pl-10 mb-1'>
                   <img src="/profile.png" className='h-14 rounded-full mr-10'/>
@@ -477,7 +510,7 @@ function Home() {
                 </div>
 
 
-                <div className='bg-[#2B2B2B] w-full h-1/11 mb-2 rounded-3xl flex items-center pl-10 pt-4 pb-4 pr-6 gap-4 '>
+                <div className='bg-[#2B2B2B] w-full h-1/11 mb-2 rounded-3xl flex items-center pl-5 md:pl-10 pt-4 pb-4 pr-6 gap-4 '>
 
                   <div className='cursor-not-allowed p-3 hover:bg-[#4F4F4F] rounded-xl'>
                     <img src="/imageIcon.png" className='cursor-not-allowed h-6' />
